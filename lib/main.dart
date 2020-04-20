@@ -91,7 +91,7 @@ class Car {
   String car_color;
 
 }
-
+Car newcar = new Car(); 
 class carview extends StatefulWidget {
   @override
   carviewState createState() {
@@ -100,12 +100,15 @@ class carview extends StatefulWidget {
 }
 class carviewState extends State<carview> with AfterLayoutMixin<carview> {
   final _formKey = GlobalKey<FormState>();
-  Car newcar = new Car(); 
+  
   void _submitForm() {
-
+    
     final FormState form = _formKey.currentState;
     form.save();
-    
+    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => mapview()),
+                    );
   }
 
   @override
@@ -137,28 +140,36 @@ class carviewState extends State<carview> with AfterLayoutMixin<carview> {
                   hintText: 'Enter your full name',
                   labelText: 'Name',
                 ),
+                onSaved: (input) => newcar.name=input,
               ),
+
               new TextFormField(
                 decoration: const InputDecoration(
                   icon: const Icon(Icons.directions_car),
                   hintText: 'Enter the car\'s registration no.',
                   labelText: 'Car no.',
                 ),
+                onSaved: (input) => newcar.car_no=input,
               ),
+
               new TextFormField(
                 decoration: const InputDecoration(
                   icon: const Icon(Icons.directions_car),
                   hintText: 'Enter the car\'s model',
                   labelText: 'Car info',
                 ),
+                onSaved: (input) => newcar.car_info=input,
               ),
+
               new TextFormField(
                 decoration: const InputDecoration(
                   icon: const Icon(Icons.color_lens),
                   hintText: 'Enter the car\'s colour',
                   labelText: 'Color',
                 ),
+                onSaved: (input) => newcar.car_color=input,
               ),
+
               new Container(
                       padding: const EdgeInsets.only(top: 20.0),
                       child: new RaisedButton(
@@ -179,12 +190,35 @@ class carviewState extends State<carview> with AfterLayoutMixin<carview> {
 
 
 class mapview extends StatelessWidget {
+  _yes(BuildContext c) {
+    Navigator.pop(c, true);
+    print("heyyy");
+    
+
+  }
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-        home: Scaffold(
+    return WillPopScope(
+      child: new Scaffold(
         body: FireMap(),
-      )
+        ),
+      onWillPop: () => showDialog<bool>(
+      context: context,
+      builder: (c) => AlertDialog(
+        title: Text('Warning'),
+        content: Text('Do you really want to exit'),
+        actions: [
+          FlatButton(
+            child: Text('Yes'),
+            onPressed: () => _yes(c),
+          ),
+          FlatButton(
+            child: Text('No'),
+            onPressed: () => Navigator.pop(c, false),
+          ),
+        ],
+      ),
+    ),
     );
   }}
 
@@ -199,7 +233,7 @@ class FireMapState extends State<FireMap> with AfterLayoutMixin<FireMap> {
   Firestore firestore = Firestore.instance;
   Geoflutterfire geo = Geoflutterfire();
   // Stateful Data
-  BehaviorSubject<double> radius = BehaviorSubject<double>.seeded(100.0);
+  BehaviorSubject<double> radius = BehaviorSubject<double>.seeded(1.0);
   Stream<dynamic> query;
 
   // Subscription
@@ -207,10 +241,7 @@ class FireMapState extends State<FireMap> with AfterLayoutMixin<FireMap> {
   @override 
   void afterFirstLayout(BuildContext context) {
     Car nowcar=new Car();
-    nowcar.name="arnav";
-    nowcar.car_no="mh 05 ab 6131";
-    nowcar.car_info="etios";
-    nowcar.car_color="black";
+    nowcar=newcar;
     _addGeoPoint(nowcar);
     _listenLocation();
     print("hii");
@@ -221,16 +252,11 @@ class FireMapState extends State<FireMap> with AfterLayoutMixin<FireMap> {
   var flag=false;
   build(context)  {
     i+=1;
-    if (i==2) {
-      print(_location.latitude);
-      i=1;
-    }
     
     if(!flag){
       sleep(const Duration(seconds:1));
       flag=true;
     }
-    
     /*firestore.collection('locations').getDocuments().then((snapshot) {
       for (DocumentSnapshot doc in snapshot.documents) {
         doc.reference.delete();
@@ -261,8 +287,8 @@ class FireMapState extends State<FireMap> with AfterLayoutMixin<FireMap> {
         bottom: 50,
         left: 10,
         child: Slider(
-          min: 100.0,
-          max: 500.0, 
+          min: 1.0,
+          max: 5.0, 
           divisions: 4,
           value: radius.value,
           label: 'Radius ${radius.value}km',
@@ -331,14 +357,16 @@ class FireMapState extends State<FireMap> with AfterLayoutMixin<FireMap> {
         String car_model = document.data['model'];
         String color = document.data['color'];
         double speed = document.data['speed'];
+        if(newcar.car_no!=car_no) {
         var marker = MarkerOptions(
           position: LatLng(pos.latitude, pos.longitude),
           icon: BitmapDescriptor.defaultMarker,
-          infoWindowText: InfoWindowText('Info : $car_no ','model $car_model, color $color, curr speed: $')
+          infoWindowText: InfoWindowText('Info : $car_no, curr speed: $speed ','model $car_model, color $color')
         );
 
 
         mapController.addMarker(marker);
+        }
     });
   }
 
@@ -366,11 +394,11 @@ class FireMapState extends State<FireMap> with AfterLayoutMixin<FireMap> {
 
   _updateQuery(value) {
       final zoomMap = {
-          100.0: 12.0,
-          200.0: 10.0,
-          300.0: 7.0,
-          400.0: 6.0,
-          500.0: 5.0 
+          1.0: 18.0,
+          2.0: 17.0,
+          3.0: 16.0,
+          4.0: 15.0,
+          5.0: 15.0 
       };
       final zoom = zoomMap[value];
       mapController.moveCamera(CameraUpdate.zoomTo(zoom));
