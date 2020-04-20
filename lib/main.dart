@@ -190,11 +190,18 @@ class carviewState extends State<carview> with AfterLayoutMixin<carview> {
 
 
 class mapview extends StatelessWidget {
+  Firestore firestore1 = Firestore.instance;
   _yes(BuildContext c) {
     Navigator.pop(c, true);
     print("heyyy");
-    
-
+    delnode();
+  }
+  delnode () {
+    firestore1.collection('locations').document(newcar.car_no).delete();
+    newcar.car_no="";
+    newcar.car_info="";
+    newcar.car_color="";
+    newcar.name="";
   }
   @override
   Widget build(BuildContext context) {
@@ -252,15 +259,17 @@ class FireMapState extends State<FireMap> with AfterLayoutMixin<FireMap> {
   var flag=false;
   build(context)  {
     i+=1;
-    
+    if (i==3) {
+      i=0;
+      updatenode();
+    }
+    print(i);
     if(!flag){
-      sleep(const Duration(seconds:1));
+      sleep(const Duration(seconds:2));
       flag=true;
     }
-    /*firestore.collection('locations').getDocuments().then((snapshot) {
-      for (DocumentSnapshot doc in snapshot.documents) {
-        doc.reference.delete();
-      }});*/
+    /**/
+  
     return Stack(children: [
     GoogleMap(
           initialCameraPosition: CameraPosition(
@@ -278,9 +287,9 @@ class FireMapState extends State<FireMap> with AfterLayoutMixin<FireMap> {
           right: 10,
           child: 
           FlatButton(
-            child: Icon(Icons.pin_drop, color: Colors.white),
-            color: Colors.green,
-            onPressed: null
+            child: Icon(Icons.arrow_back, color: Colors.white),
+            color: Colors.blue,
+            onPressed: _stopListen
           )
       ),
       Positioned(
@@ -329,6 +338,16 @@ class FireMapState extends State<FireMap> with AfterLayoutMixin<FireMap> {
     );
   }
 
+  updatenode() async {
+    var pos = await location.getLocation();
+    GeoFirePoint point = geo.point(latitude: pos.latitude, longitude: pos.longitude);
+    Firestore.instance  .collection('locations').document(newcar.car_no)
+      .updateData({
+        'position': point.data,
+        'speed': pos.speed
+      });
+  }
+
   // Set GeoLocation Data
   Future<DocumentReference> _addGeoPoint(Car car) async {
     var pos = await location.getLocation();
@@ -356,12 +375,12 @@ class FireMapState extends State<FireMap> with AfterLayoutMixin<FireMap> {
         String car_no= document.data['number'];
         String car_model = document.data['model'];
         String color = document.data['color'];
-        double speed = document.data['speed'];
+        double speed = document.data['speed'] * 3.6;
         if(newcar.car_no!=car_no) {
         var marker = MarkerOptions(
           position: LatLng(pos.latitude, pos.longitude),
           icon: BitmapDescriptor.defaultMarker,
-          infoWindowText: InfoWindowText('Info : $car_no, curr speed: $speed ','model $car_model, color $color')
+          infoWindowText: InfoWindowText('Info : $car_no, curr speed: $speed km/hr','model $car_model, color $color')
         );
 
 
